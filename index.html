@@ -19,9 +19,6 @@
     .container {
       max-width: 700px;
       margin: 0 auto;
-      background: white;
-      border: 1px solid #d8d8d8;
-      padding: 40px;
       text-align: center;
     }
 
@@ -31,37 +28,36 @@
       border-radius: 50%;
       object-fit: cover;
       display: block;
-      margin: 0 auto 30px auto;
+      margin: 0 auto 40px auto;
       border: 1px solid #cfcfcf;
+    }
+
+    .section {
+      text-align: left;
+      margin-bottom: 35px;
+    }
+
+    h2 {
+      font-size: 12px;
+      font-weight: bold;
+      margin-bottom: 6px;
+      font-family: Tahoma, Verdana, Arial, sans-serif;
     }
 
     a {
       color: #0033cc;
       text-decoration: none;
+      font-size: 11px;
     }
 
     a:hover {
       text-decoration: underline;
     }
 
-    h2 {
-      font-size: 12px;
-      font-weight: bold;
-      margin-top: 35px;
-      margin-bottom: 8px;
-      font-family: Tahoma, Verdana, Arial, sans-serif;
-    }
-
-    .section-link {
-      display: block;
-      margin-bottom: 10px;
-      font-size: 11px;
-    }
-
     hr {
       border: none;
-      border-top: 1px solid #e0e0e0;
-      margin: 30px 0;
+      border-top: 1px solid #d0d0d0;
+      margin: 25px 0;
     }
   </style>
 </head>
@@ -73,18 +69,24 @@
       <img src="yourphoto.jpg" alt="Profile Photo" class="profile-photo">
     </a>
 
-    <h2>Film</h2>
-    <a href="film.html" class="section-link">Enter Film</a>
+    <div class="section">
+      <h2>Film</h2>
+      <a href="film.html">Enter Film</a>
+    </div>
 
     <hr>
 
-    <h2>Photos</h2>
-    <a href="photos.html" class="section-link">Enter Photos</a>
+    <div class="section">
+      <h2>Photos</h2>
+      <a href="photos.html">Enter Photos</a>
+    </div>
 
     <hr>
 
-    <h2>Writing</h2>
-    <a href="writing.html" class="section-link">Enter Writing</a>
+    <div class="section">
+      <h2>Writing</h2>
+      <a href="writing.html">Enter Writing</a>
+    </div>
 
   </div>
 
