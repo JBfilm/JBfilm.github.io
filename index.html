@@ -17,18 +17,37 @@
       text-align: center;
     }
 
-    .profile-photo {
-  width: 150px;
-  height: 150px;
-  object-fit: cover;
-  display: block;
-  margin: 0 auto 95px auto;
-  border-radius: 50%;
-  border: 1px solid #cfcfcf;
-}
+    .hero {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 120px;
+    }
+
+    #graphic-wrap {
+      width: 320px;
+      height: 320px;
+      position: relative;
+    }
+
+    #graphic {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    #graphic-wrap::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0.12;
+      background-image:
+        radial-gradient(circle, rgba(0,0,0,.08) 1px, transparent 1px);
+      background-size: 22px 22px;
+    }
 
     .section {
-      margin-bottom: 75px;
+      margin-bottom: 90px;
     }
 
     a:link {
@@ -51,9 +70,11 @@
 </head>
 <body>
 
-  <a href="index.html">
-    <img src="yourphoto.jpg" alt="Profile Photo" class="profile-photo">
-  </a>
+  <div class="hero">
+    <div id="graphic-wrap">
+      <canvas id="graphic"></canvas>
+    </div>
+  </div>
 
   <div class="section">
     <a href="film.html">film.html</a>
@@ -66,6 +87,72 @@
   <div class="section">
     <a href="writing.html">writing.html</a>
   </div>
+
+  <script type="module">
+    import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
+
+    const canvas = document.getElementById("graphic");
+    const renderer = new THREE.WebGLRenderer({
+      canvas,
+      alpha: true,
+      antialias: true
+    });
+
+    renderer.setSize(320, 320);
+
+    const scene = new THREE.Scene();
+
+    const camera = new THREE.PerspectiveCamera(35, 1, 0.1, 100);
+    camera.position.z = 8;
+
+    const ambient = new THREE.AmbientLight(0xffffff, 1.2);
+    scene.add(ambient);
+
+    const light = new THREE.DirectionalLight(0xffffff, 1.5);
+    light.position.set(3, 2, 5);
+    scene.add(light);
+
+    const points = [];
+    for (let i = 0; i <= 40; i++) {
+      const y = -1.5 + (i / 40) * 3;
+      const x = 1.4 * Math.pow(1 - Math.abs(y / 1.5), 0.7);
+      points.push(new THREE.Vector2(x, y));
+    }
+
+    const geometry = new THREE.LatheGeometry(points, 80);
+
+    const material = new THREE.MeshStandardMaterial({
+      color: 0xd8d2ca,
+      roughness: 0.45,
+      metalness: 0.05
+    });
+
+    const lens = new THREE.Mesh(geometry, material);
+    scene.add(lens);
+
+    const loader = new THREE.TextureLoader();
+
+    loader.load("JBFILMLOGO.JPG", function(texture) {
+      const plane = new THREE.Mesh(
+        new THREE.PlaneGeometry(1.6, 2),
+        new THREE.MeshBasicMaterial({ map: texture })
+      );
+
+      plane.position.z = 1.5;
+      scene.add(plane);
+
+      function animate() {
+        requestAnimationFrame(animate);
+
+        lens.rotation.y -= 0.01;
+        plane.rotation.y -= 0.01;
+
+        renderer.render(scene, camera);
+      }
+
+      animate();
+    });
+  </script>
 
 </body>
 </html>
