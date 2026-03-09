@@ -92,256 +92,175 @@
   </div>
 
   <script type="module">
-    import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
+import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
 
-    const canvas = document.getElementById("graphic");
-    const renderer = new THREE.WebGLRenderer({
-      canvas,
-      antialias: true,
-      alpha: true
-    });
+const canvas = document.getElementById("graphic");
+const renderer = new THREE.WebGLRenderer({
+  canvas,
+  antialias: true,
+  alpha: true
+});
 
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
-    const scene = new THREE.Scene();
+const scene = new THREE.Scene();
 
-    const camera = new THREE.PerspectiveCamera(35, 1, 0.1, 100);
-    camera.position.set(0, 0, 8);
+const camera = new THREE.PerspectiveCamera(35, 1, 0.1, 100);
+camera.position.set(0, 0, 8);
 
-    function resize() {
-      const wrap = document.getElementById("graphic-wrap");
-      const w = wrap.clientWidth;
-      const h = wrap.clientHeight;
-      renderer.setSize(w, h, false);
-      camera.aspect = w / h;
-      camera.updateProjectionMatrix();
-    }
-    resize();
-    window.addEventListener("resize", resize);
+function resize() {
+  const wrap = document.getElementById("graphic-wrap");
+  renderer.setSize(wrap.clientWidth, wrap.clientHeight, false);
+  camera.aspect = 1;
+  camera.updateProjectionMatrix();
+}
+resize();
+window.addEventListener("resize", resize);
 
-    // Lights
-    scene.add(new THREE.AmbientLight(0xffffff, 1.15));
+scene.add(new THREE.AmbientLight(0xffffff, 1.2));
 
-    const keyLight = new THREE.DirectionalLight(0xffffff, 1.7);
-    keyLight.position.set(3, 2, 5);
-    scene.add(keyLight);
+const light1 = new THREE.DirectionalLight(0xffffff, 1.7);
+light1.position.set(3, 2, 5);
+scene.add(light1);
 
-    const fillLight = new THREE.DirectionalLight(0xffe6c9, 0.75);
-    fillLight.position.set(-4, -1, 3);
-    scene.add(fillLight);
+const light2 = new THREE.DirectionalLight(0xffe4c7, 0.7);
+light2.position.set(-4, -1, 3);
+scene.add(light2);
 
-    const rimLight = new THREE.DirectionalLight(0xdde8ff, 0.95);
-    rimLight.position.set(0, 2, -5);
-    scene.add(rimLight);
+const medal = new THREE.Group();
+scene.add(medal);
 
-    const medalGroup = new THREE.Group();
-    scene.add(medalGroup);
+const textureLoader = new THREE.TextureLoader();
 
-    // ---------- texture helpers ----------
-    function makeNoiseCanvas(size = 512, tint = [110, 90, 60], alphaMax = 0.12) {
-      const c = document.createElement("canvas");
-      c.width = size;
-      c.height = size;
-      const ctx = c.getContext("2d");
+const noiseCanvas = document.createElement("canvas");
+noiseCanvas.width = 512;
+noiseCanvas.height = 512;
+const ctx = noiseCanvas.getContext("2d");
 
-      ctx.clearRect(0, 0, size, size);
+for (let i = 0; i < 7000; i++) {
+  const x = Math.random() * 512;
+  const y = Math.random() * 512;
+  const a = Math.random() * 0.08;
+  ctx.fillStyle = `rgba(0,0,0,${a})`;
+  ctx.fillRect(x, y, 1, 1);
+}
 
-      for (let i = 0; i < 7000; i++) {
-        const x = Math.random() * size;
-        const y = Math.random() * size;
-        const a = Math.random() * alphaMax;
-        const gray = 40 + Math.floor(Math.random() * 100);
-        ctx.fillStyle = `rgba(${gray},${gray},${gray},${a})`;
-        ctx.fillRect(x, y, 1, 1);
-      }
+const noiseTexture = new THREE.CanvasTexture(noiseCanvas);
 
-      for (let i = 0; i < 300; i++) {
-        const x = Math.random() * size;
-        const y = Math.random() * size;
-        const r = 10 + Math.random() * 50;
-        const g = ctx.createRadialGradient(x, y, 0, x, y, r);
-        g.addColorStop(0, `rgba(${tint[0]},${tint[1]},${tint[2]},${0.07 + Math.random() * 0.06})`);
-        g.addColorStop(1, "rgba(0,0,0,0)");
-        ctx.fillStyle = g;
-        ctx.beginPath();
-        ctx.arc(x, y, r, 0, Math.PI * 2);
-        ctx.fill();
-      }
+const metalMaterial = new THREE.MeshStandardMaterial({
+  color: 0xd3c3aa,
+  roughness: 0.72,
+  metalness: 0.08,
+  map: noiseTexture
+});
 
-      return c;
-    }
+const rimMaterial = new THREE.MeshStandardMaterial({
+  color: 0xe4d5be,
+  roughness: 0.45,
+  metalness: 0.04,
+  map: noiseTexture
+});
 
-    const noiseCanvas = makeNoiseCanvas();
-    const noiseTexture = new THREE.CanvasTexture(noiseCanvas);
-    noiseTexture.wrapS = THREE.RepeatWrapping;
-    noiseTexture.wrapT = THREE.RepeatWrapping;
-    noiseTexture.repeat.set(1.6, 1.6);
+const thickness = 0.5;
 
-    // ---------- materials ----------
-    const edgeMaterial = new THREE.MeshStandardMaterial({
-      color: 0xc8b79d,
-      roughness: 0.72,
-      metalness: 0.08,
-      map: noiseTexture
-    });
+const body = new THREE.Mesh(
+  new THREE.CylinderGeometry(1.75, 1.75, thickness, 96),
+  metalMaterial
+);
+body.rotation.z = Math.PI / 2;
+medal.add(body);
 
-    const backMaterial = new THREE.MeshStandardMaterial({
-      color: 0xd4c5af,
-      roughness: 0.78,
-      metalness: 0.05,
-      map: noiseTexture
-    });
+const frontBevel = new THREE.Mesh(
+  new THREE.CylinderGeometry(1.58, 1.68, 0.08, 96),
+  rimMaterial
+);
+frontBevel.rotation.z = Math.PI / 2;
+frontBevel.position.x = thickness / 2 + 0.03;
+medal.add(frontBevel);
 
-    const rimMaterial = new THREE.MeshStandardMaterial({
-      color: 0xe1d3bd,
-      roughness: 0.45,
-      metalness: 0.04,
-      map: noiseTexture
-    });
+const frontRidge = new THREE.Mesh(
+  new THREE.TorusGeometry(1.62, 0.08, 24, 120),
+  rimMaterial
+);
+frontRidge.rotation.y = Math.PI / 2;
+frontRidge.position.x = thickness / 2 + 0.05;
+medal.add(frontRidge);
 
-    // ---------- medallion geometry ----------
-    const radius = 1.75;
-    const thickness = 0.40;
+const backBevel = new THREE.Mesh(
+  new THREE.CylinderGeometry(1.58, 1.68, 0.08, 96),
+  rimMaterial
+);
+backBevel.rotation.z = Math.PI / 2;
+backBevel.position.x = -(thickness / 2 + 0.03);
+medal.add(backBevel);
 
-    // Main body / edge
-    const bodyGeo = new THREE.CylinderGeometry(radius, radius, thickness, 96, 1, false);
-    const body = new THREE.Mesh(bodyGeo, edgeMaterial);
-    body.rotation.z = Math.PI / 2;
-    medalGroup.add(body);
+const backRidge = new THREE.Mesh(
+  new THREE.TorusGeometry(1.62, 0.08, 24, 120),
+  rimMaterial
+);
+backRidge.rotation.y = Math.PI / 2;
+backRidge.position.x = -(thickness / 2 + 0.05);
+medal.add(backRidge);
 
-    // Front recessed/raised plate to receive image
-    const frontPlateGeo = new THREE.CylinderGeometry(1.46, 1.46, 0.07, 96);
-    const frontPlate = new THREE.Mesh(frontPlateGeo, rimMaterial);
-    frontPlate.rotation.z = Math.PI / 2;
-    frontPlate.position.x = thickness / 2 + 0.02;
-    medalGroup.add(frontPlate);
+const photoTexture = await textureLoader.loadAsync("JBFILMLOGO.JPG");
+photoTexture.colorSpace = THREE.SRGBColorSpace;
 
-    // Outer front ridge
-    const frontRidgeGeo = new THREE.TorusGeometry(1.58, 0.09, 24, 120);
-    const frontRidge = new THREE.Mesh(frontRidgeGeo, rimMaterial);
-    frontRidge.rotation.y = Math.PI / 2;
-    frontRidge.position.x = thickness / 2 + 0.045;
-    medalGroup.add(frontRidge);
+const photoMaterial = new THREE.MeshStandardMaterial({
+  map: photoTexture,
+  roughness: 0.9,
+  metalness: 0
+});
 
-    // Back ridge
-    const backRidgeGeo = new THREE.TorusGeometry(1.58, 0.09, 24, 120);
-    const backRidge = new THREE.Mesh(backRidgeGeo, rimMaterial);
-    backRidge.rotation.y = Math.PI / 2;
-    backRidge.position.x = -(thickness / 2 + 0.045);
-    medalGroup.add(backRidge);
+const photo = new THREE.Mesh(
+  new THREE.CircleGeometry(1.34, 96),
+  photoMaterial
+);
 
-    // Back face
-    const backFaceGeo = new THREE.CircleGeometry(1.50, 96);
-    const backFace = new THREE.Mesh(backFaceGeo, backMaterial);
-    backFace.rotation.y = -Math.PI / 2;
-    backFace.position.x = -(thickness / 2 + 0.041);
-    medalGroup.add(backFace);
+photo.rotation.y = Math.PI / 2;
+photo.position.x = thickness / 2 + 0.07;
+medal.add(photo);
 
-    // Small center back disc for layered look
-    const backInnerGeo = new THREE.CircleGeometry(1.25, 96);
-    const backInner = new THREE.Mesh(backInnerGeo, new THREE.MeshStandardMaterial({
-      color: 0xcfc0aa,
-      roughness: 0.82,
-      metalness: 0.03,
-      map: noiseTexture
-    }));
-    backInner.rotation.y = -Math.PI / 2;
-    backInner.position.x = -(thickness / 2 + 0.042);
-    medalGroup.add(backInner);
+const stainCanvas = document.createElement("canvas");
+stainCanvas.width = 512;
+stainCanvas.height = 512;
+const sctx = stainCanvas.getContext("2d");
 
-    // ---------- photo mapped onto front face ----------
-    const textureLoader = new THREE.TextureLoader();
-    const photoTexture = await textureLoader.loadAsync("JBFILMLOGO.JPG");
-    photoTexture.colorSpace = THREE.SRGBColorSpace;
+for (let i = 0; i < 2500; i++) {
+  const x = Math.random() * 512;
+  const y = Math.random() * 512;
+  const a = Math.random() * 0.03;
+  sctx.fillStyle = `rgba(90,60,30,${a})`;
+  sctx.fillRect(x, y, 1, 1);
+}
 
-    // make image feel a little less digital
-    photoTexture.anisotropy = renderer.capabilities.getMaxAnisotropy();
+const stainTexture = new THREE.CanvasTexture(stainCanvas);
 
-    const photoMaterial = new THREE.MeshStandardMaterial({
-      map: photoTexture,
-      roughness: 0.88,
-      metalness: 0.0
-    });
+const stain = new THREE.Mesh(
+  new THREE.CircleGeometry(1.34, 96),
+  new THREE.MeshStandardMaterial({
+    map: stainTexture,
+    transparent: true,
+    roughness: 1
+  })
+);
 
-    const photoFaceGeo = new THREE.CircleGeometry(1.34, 96);
-    const photoFace = new THREE.Mesh(photoFaceGeo, photoMaterial);
-    photoFace.rotation.y = Math.PI / 2;
-    photoFace.position.x = thickness / 2 + 0.061;
-    medalGroup.add(photoFace);
+stain.rotation.y = Math.PI / 2;
+stain.position.x = thickness / 2 + 0.072;
+medal.add(stain);
 
-    // thin transparent discoloration layer over the photo
-    const stainCanvas = document.createElement("canvas");
-    stainCanvas.width = 512;
-    stainCanvas.height = 512;
-    const sctx = stainCanvas.getContext("2d");
+medal.rotation.x = -0.10;
+medal.rotation.z = 0.05;
 
-    const stainGrad1 = sctx.createRadialGradient(180, 160, 20, 200, 190, 180);
-    stainGrad1.addColorStop(0, "rgba(160,120,70,0.16)");
-    stainGrad1.addColorStop(0.5, "rgba(90,70,45,0.08)");
-    stainGrad1.addColorStop(1, "rgba(0,0,0,0)");
-    sctx.fillStyle = stainGrad1;
-    sctx.fillRect(0, 0, 512, 512);
+function animate() {
+  requestAnimationFrame(animate);
 
-    const stainGrad2 = sctx.createRadialGradient(350, 340, 10, 320, 320, 130);
-    stainGrad2.addColorStop(0, "rgba(80,60,35,0.07)");
-    stainGrad2.addColorStop(1, "rgba(0,0,0,0)");
-    sctx.fillStyle = stainGrad2;
-    sctx.fillRect(0, 0, 512, 512);
+  medal.rotation.y -= 0.0045;   // slower spin
 
-    for (let i = 0; i < 2600; i++) {
-      const x = Math.random() * 512;
-      const y = Math.random() * 512;
-      const a = Math.random() * 0.035;
-      sctx.fillStyle = `rgba(0,0,0,${a})`;
-      sctx.fillRect(x, y, 1, 1);
-    }
+  renderer.render(scene, camera);
+}
 
-    const stainTexture = new THREE.CanvasTexture(stainCanvas);
-    stainTexture.colorSpace = THREE.SRGBColorSpace;
-
-    const stainMaterial = new THREE.MeshStandardMaterial({
-      map: stainTexture,
-      transparent: true,
-      roughness: 1,
-      metalness: 0
-    });
-
-    const stainFace = new THREE.Mesh(new THREE.CircleGeometry(1.34, 96), stainMaterial);
-    stainFace.rotation.y = Math.PI / 2;
-    stainFace.position.x = thickness / 2 + 0.063;
-    medalGroup.add(stainFace);
-
-    // subtle glassy coat to help it feel embedded in the medallion
-    const coatMaterial = new THREE.MeshPhysicalMaterial({
-      color: 0xffffff,
-      transparent: true,
-      opacity: 0.08,
-      roughness: 0.35,
-      metalness: 0,
-      clearcoat: 0.45,
-      clearcoatRoughness: 0.6
-    });
-
-    const coatFace = new THREE.Mesh(new THREE.CircleGeometry(1.34, 96), coatMaterial);
-    coatFace.rotation.y = Math.PI / 2;
-    coatFace.position.x = thickness / 2 + 0.066;
-    medalGroup.add(coatFace);
-
-    // slight overall pose
-    medalGroup.rotation.x = -0.10;
-    medalGroup.rotation.z = 0.05;
-
-    function animate() {
-      requestAnimationFrame(animate);
-
-      // clockwise on Y axis from viewer perspective
-      medalGroup.rotation.y -= 0.0105;
-
-      renderer.render(scene, camera);
-    }
-
-    animate();
-  </script>
+animate();
+</script>
 
 </body>
 </html>
